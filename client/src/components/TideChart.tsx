@@ -64,6 +64,23 @@ const TideChart: React.FC<Props> = ({
   const PAD = 24
   const BOTTOM_PAD = 60
 
+  // Filter extremes to only show significant ones (more than 1 foot from neighbors)
+  const significantExtremes = useMemo(() => {
+    if (extremesParsed.length === 0) return []
+
+    return extremesParsed.filter((extreme, i) => {
+      if (i === 0 || i === extremesParsed.length - 1) return true // Always show first and last
+
+      const prev = extremesParsed[i - 1]
+      const next = extremesParsed[i + 1]
+
+      const diffFromPrev = Math.abs(extreme.h - prev.h)
+      const diffFromNext = Math.abs(extreme.h - next.h)
+
+      return diffFromPrev > 1 || diffFromNext > 1
+    })
+  }, [extremesParsed])
+
   const { path, xNow, yNow, y, x, hMin, hMax, dayTicks } = useMemo(() => {
     const W = dimensions.width
     const H = dimensions.height
@@ -186,26 +203,28 @@ const TideChart: React.FC<Props> = ({
           <path d={path} fill="url(#ripples)" mask="url(#softFade)" />
         </g>
 
-        {/* Optional H/L markers (when extremes provided) */}
+        {/* Optional H/L markers (when extremes provided) - only low tides */}
         {showMarkers &&
-          extremesParsed.length > 0 &&
-          extremesParsed.map((e) => (
-            <g key={e.t}>
-              <circle cx={x(new Date(e.t))} cy={y(e.h)} r="3" fill="#fff" />
-              <text
-                x={x(new Date(e.t))}
-                y={y(e.h) - 8}
-                textAnchor="middle"
-                fontSize="10"
-                fill="rgba(255,255,255,0.85)"
-              >
-                {Math.round(e.h * 10) / 10}′
-              </text>
-            </g>
-          ))}
+          significantExtremes.filter((e) => e.type === "L").length > 0 &&
+          significantExtremes
+            .filter((e) => e.type === "L")
+            .map((e) => (
+              <g key={e.t}>
+                <circle cx={x(new Date(e.t))} cy={y(e.h)} r="3" fill="#fff" />
+                <text
+                  x={x(new Date(e.t))}
+                  y={y(e.h) + 20}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="rgba(255,255,255,0.85)"
+                >
+                  {Math.round(e.h * 10) / 10}′
+                </text>
+              </g>
+            ))}
 
         {/* Time labels - only on low tides */}
-        {extremesParsed
+        {significantExtremes
           .filter((e) => e.type === "L")
           .map((e, i) => {
             const date = new Date(e.t)
