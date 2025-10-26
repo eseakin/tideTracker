@@ -1,0 +1,32 @@
+{
+  "name": "newProjectTemplate-server",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "description": "Server for newProjectTemplate",
+  "main": "server.js",
+  "author": "Eric Eakin",
+  "license": "none",
+  "private": true,
+  "engines": {
+    "node": "^22.16.0",
+    "yarn": "^1.22.19"
+  },
+  "scripts": {
+    "dev": "npx nodemon --ext ts --exec ts-node --project tsconfig.server.json server.ts",
+    "build": "npx tsc --project tsconfig.server.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.14",
+    "nodemon": "^3.1.10",
+    "tsx": "^4.20.3"
+  }
+}

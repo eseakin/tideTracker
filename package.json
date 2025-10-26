@@ -1,0 +1,69 @@
+{
+  "name": "newProjectTemplate",
+  "author": "Eric Eakin",
+  "license": "none",
+  "repository": "https://github.com/eseakin/newProjectTemplate",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "engines": {
+    "node": "^22.16.0",
+    "yarn": "^1.22.19"
+  },
+  "scripts": {
+    "dev": "yarn workspace newProjectTemplate-client dev",
+    "dev:server": "yarn workspace newProjectTemplate-server dev",
+    "start": "node server/dist/server.js",
+    "build": "yarn workspace newProjectTemplate-client build && yarn workspace newProjectTemplate-server build",
+    "firebase": "firebase emulators:start --import=./emulatorDb --export-on-exit=./emulatorDb",
+    "heroku-postbuild": "yarn build",
+    "lint": "yarn workspace newProjectTemplate-client lint",
+    "fix": "yarn workspace newProjectTemplate-client fix",
+    "preview": "yarn workspace newProjectTemplate-client preview",
+    "postinstall": "yarn workspace newProjectTemplate-server install",
+    "install:all": "yarn install && yarn workspace newProjectTemplate-client install && yarn workspace newProjectTemplate-server install",
+    "test": "yarn workspace newProjectTemplate-client test",
+    "test:watch": "yarn workspace newProjectTemplate-client test:watch",
+    "set-cors": "gsutil cors set /Users/eseakin/dev/newProjectTemplate/cors.json gs://firestore-test-d50d6.firebasestorage.app"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.13",
+    "dayjs-plugin-utc": "^0.1.2",
+    "dayjs-timezone-iana-plugin": "^0.1.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "vite": "^4.3.2",
+    "vite-plugin-checker": "^0.6.0",
+    "vite-tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.0",
+    "@babel/core": "^7.28.0",
+    "@types/lodash": "^4.14.194",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-problems": "^9.0.0",
+    "eslint-plugin-consistent-default-export-name": "^0.0.15",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.3.4",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.0.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.1.4"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "resolutions": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0"
+  }
+}

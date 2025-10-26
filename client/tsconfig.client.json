@@ -1,0 +1,29 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": false,
+    "composite": true,
+    "outDir": "dist",
+    "types": ["vite/client"],
+
+    // Client-specific path aliases
+    "baseUrl": "./src",
+    "paths": {
+      "#components/*": ["components/*"],
+      "#blocks/*": ["components/buildingBlocks/*"],
+      "#views/*": ["components/views/*"],
+      
+      "#assets/*": ["assets/*"],
+      "#constants/*": ["constants/*"],
+      "#contexts/*": ["contexts/*"],
+      "#hooks/*": ["hooks/*"],
+      "#mocks/*": ["mocks/*"],
+      "#customTypes/*": ["types/*"],
+      "#utils/*": ["utils/*"],
+
+      "#": ["*"]
+    }
+  },
+  "include": ["src"]
+}
