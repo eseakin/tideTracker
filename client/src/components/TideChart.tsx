@@ -81,6 +81,19 @@ const TideChart: React.FC<Props> = ({
     })
   }, [extremesParsed])
 
+  // Lowest daytime (9am-6pm) low tide height among significant lows
+  const lowestDaytimeLow = useMemo(() => {
+    const lows = significantExtremes.filter((e) => {
+      if (e.type !== "L") return false
+      const d = new Date(e.t)
+      const hours = d.getHours()
+      const minutes = d.getMinutes()
+      const hourOfDay = hours + minutes / 60
+      return hourOfDay >= 9 && hourOfDay < 18
+    })
+    return lows.length ? Math.min(...lows.map((e) => e.h)) : Infinity
+  }, [significantExtremes])
+
   const { path, xNow, yNow, y, x, hMin, hMax, dayTicks } = useMemo(() => {
     const W = dimensions.width
     const H = dimensions.height
@@ -208,20 +221,70 @@ const TideChart: React.FC<Props> = ({
           significantExtremes.filter((e) => e.type === "L").length > 0 &&
           significantExtremes
             .filter((e) => e.type === "L")
-            .map((e) => (
-              <g key={e.t}>
-                <circle cx={x(new Date(e.t))} cy={y(e.h)} r="3" fill="#fff" />
-                <text
-                  x={x(new Date(e.t))}
-                  y={y(e.h) + 20}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fill="rgba(255,255,255,0.85)"
-                >
-                  {Math.round(e.h * 10) / 10}′
-                </text>
-              </g>
-            ))}
+            .map((e) => {
+              const date = new Date(e.t)
+              const hours = date.getHours()
+              const minutes = date.getMinutes()
+              const hourOfDay = hours + minutes / 60
+              const isDaytime = hourOfDay >= 9 && hourOfDay < 18
+              const isTopCandidate =
+                isDaytime &&
+                Number.isFinite(lowestDaytimeLow) &&
+                Math.abs(e.h - lowestDaytimeLow) <= 8 / 12
+
+              return (
+                <g key={e.t}>
+                  {isTopCandidate && (
+                    <circle
+                      cx={x(date)}
+                      cy={y(e.h)}
+                      r="12"
+                      fill="rgba(255, 215, 0, 0.35)"
+                      stroke="rgba(255, 215, 0, 0.95)"
+                      strokeWidth="2.5"
+                    />
+                  )}
+                  {!isTopCandidate && isDaytime && (
+                    <circle
+                      cx={x(date)}
+                      cy={y(e.h)}
+                      r="8"
+                      fill="rgba(255, 215, 0, 0.3)"
+                      stroke="rgba(255, 215, 0, 0.6)"
+                      strokeWidth="1.5"
+                    />
+                  )}
+                  <circle
+                    cx={x(date)}
+                    cy={y(e.h)}
+                    r={isTopCandidate ? "6" : isDaytime ? "4" : "3"}
+                    fill={
+                      isTopCandidate
+                        ? "#ffd700"
+                        : isDaytime
+                          ? "#ffd700"
+                          : "rgba(255,255,255,0.5)"
+                    }
+                  />
+                  <text
+                    x={x(date)}
+                    y={y(e.h) + 20}
+                    textAnchor="middle"
+                    fontSize="13"
+                    fill={
+                      isTopCandidate
+                        ? "#ffd700"
+                        : isDaytime
+                          ? "#ffd700"
+                          : "rgba(255,255,255,0.5)"
+                    }
+                    fontWeight={isTopCandidate || isDaytime ? "bold" : "normal"}
+                  >
+                    {Math.round(e.h * 10) / 10}′
+                  </text>
+                </g>
+              )
+            })}
 
         {/* Time labels - only on low tides */}
         {significantExtremes
@@ -248,7 +311,7 @@ const TideChart: React.FC<Props> = ({
               <g key={`low-tide-time-${i}`}>
                 <text
                   x={xPos}
-                  y={dimensions.height - BOTTOM_PAD + 20}
+                  y={dimensions.height - BOTTOM_PAD + 15}
                   textAnchor="middle"
                   fontSize="10"
                   fill="rgba(255,255,255,0.75)"
@@ -272,22 +335,13 @@ const TideChart: React.FC<Props> = ({
             <g key={`date-label-${i}`}>
               <text
                 x={xPos}
-                y={dimensions.height - BOTTOM_PAD + 35}
+                y={dimensions.height - BOTTOM_PAD + 50}
                 textAnchor="middle"
-                fontSize="11"
+                fontSize="14"
                 fontWeight="bold"
                 fill="rgba(255,255,255,0.9)"
               >
-                {dayName}
-              </text>
-              <text
-                x={xPos}
-                y={dimensions.height - BOTTOM_PAD + 48}
-                textAnchor="middle"
-                fontSize="10"
-                fill="rgba(255,255,255,0.7)"
-              >
-                {monthDay}
+                {dayName} {monthDay}
               </text>
             </g>
           )
@@ -302,6 +356,7 @@ const TideChart: React.FC<Props> = ({
               y1={16}
               y2={dimensions.height - BOTTOM_PAD}
               stroke="rgba(255,255,255,0.35)"
+              strokeWidth="3"
               strokeDasharray="4 6"
             />
             <circle cx={xNow} cy={yNow} r="4" fill="#fff" />
