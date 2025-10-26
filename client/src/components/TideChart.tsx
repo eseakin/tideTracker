@@ -61,29 +61,32 @@ const TideChart: React.FC<Props> = ({
     return { series: ser, extremesParsed: ex }
   }, [extremes, stepMin])
 
-  const { path, xNow, yNow, y, x, hMin, hMax } = useMemo(() => {
-    const PAD = 24
+  const PAD = 24
+  const BOTTOM_PAD = 60
+
+  const { path, xNow, yNow, y, x, hMin, hMax, dayTicks } = useMemo(() => {
     const W = dimensions.width
     const H = dimensions.height
 
     const hMin = d3.min(series, (d) => d.h)!
     const hMax = d3.max(series, (d) => d.h)!
 
+    const domain = d3.extent(series, (d) => new Date(d.t)) as [Date, Date]
     const x = d3
       .scaleTime()
-      .domain(d3.extent(series, (d) => new Date(d.t)) as [Date, Date])
+      .domain(domain)
       .range([PAD, W - PAD])
 
     const y = d3
       .scaleLinear()
       .domain([hMin - 0.5, hMax + 0.5])
       .nice()
-      .range([H - PAD, PAD])
+      .range([H - BOTTOM_PAD, PAD])
 
     const area = d3
       .area<Point>()
       .x((d) => x(new Date(d.t)))
-      .y0(H - PAD)
+      .y0(H - BOTTOM_PAD)
       .y1((d) => y(d.h))
       .curve(d3.curveCatmullRom.alpha(0.5))
 
@@ -94,7 +97,14 @@ const TideChart: React.FC<Props> = ({
     const xNow = x(new Date(now))
     const yNow = y(hNow)
 
-    return { path, xNow, yNow, y, x, hMin, hMax }
+    // Generate day ticks (for bold marks)
+    const dayTicks = d3
+      .scaleTime()
+      .domain(domain)
+      .range([PAD, W - PAD])
+      .ticks(d3.timeDay)
+
+    return { path, xNow, yNow, y, x, hMin, hMax, dayTicks }
   }, [series, dimensions.width, dimensions.height])
 
   return (
@@ -151,6 +161,23 @@ const TideChart: React.FC<Props> = ({
           </mask>
         </defs>
 
+        {/* Day boundary lines (bold) */}
+        {dayTicks.map((date: Date, i: number) => {
+          const xPos = x(date)
+          return (
+            <g key={`day-${i}`}>
+              <line
+                x1={xPos}
+                y1={PAD}
+                x2={xPos}
+                y2={dimensions.height - BOTTOM_PAD}
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="1.5"
+              />
+            </g>
+          )
+        })}
+
         {/* Tide area */}
         <path d={path} fill="url(#water)" opacity="0.95" />
 
@@ -172,11 +199,80 @@ const TideChart: React.FC<Props> = ({
                 fontSize="10"
                 fill="rgba(255,255,255,0.85)"
               >
-                {e.type}
                 {Math.round(e.h * 10) / 10}′
               </text>
             </g>
           ))}
+
+        {/* Time labels - only on low tides */}
+        {extremesParsed
+          .filter((e) => e.type === "L")
+          .map((e, i) => {
+            const date = new Date(e.t)
+            const xPos = x(date)
+            const hours = date.getHours()
+            const minutes = date.getMinutes()
+            const timeStr =
+              hours === 0 && minutes === 0
+                ? "12 AM"
+                : hours === 12 && minutes === 0
+                  ? "12 PM"
+                  : hours === 0
+                    ? `12:${minutes.toString().padStart(2, "0")} AM`
+                    : hours < 12
+                      ? `${hours}:${minutes.toString().padStart(2, "0")} AM`
+                      : hours === 12
+                        ? `12:${minutes.toString().padStart(2, "0")} PM`
+                        : `${hours - 12}:${minutes.toString().padStart(2, "0")} PM`
+
+            return (
+              <g key={`low-tide-time-${i}`}>
+                <text
+                  x={xPos}
+                  y={dimensions.height - BOTTOM_PAD + 20}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="rgba(255,255,255,0.75)"
+                >
+                  {timeStr}
+                </text>
+              </g>
+            )
+          })}
+
+        {/* Date labels (once per day) */}
+        {dayTicks.map((date: Date, i: number) => {
+          const xPos = x(date)
+          const dayName = date.toLocaleDateString("en-US", { weekday: "short" })
+          const monthDay = date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })
+
+          return (
+            <g key={`date-label-${i}`}>
+              <text
+                x={xPos}
+                y={dimensions.height - BOTTOM_PAD + 35}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="bold"
+                fill="rgba(255,255,255,0.9)"
+              >
+                {dayName}
+              </text>
+              <text
+                x={xPos}
+                y={dimensions.height - BOTTOM_PAD + 48}
+                textAnchor="middle"
+                fontSize="10"
+                fill="rgba(255,255,255,0.7)"
+              >
+                {monthDay}
+              </text>
+            </g>
+          )
+        })}
 
         {/* Now marker */}
         {Number.isFinite(xNow) && Number.isFinite(yNow) && (
@@ -185,7 +281,7 @@ const TideChart: React.FC<Props> = ({
               x1={xNow}
               x2={xNow}
               y1={16}
-              y2={dimensions.height - 16}
+              y2={dimensions.height - BOTTOM_PAD}
               stroke="rgba(255,255,255,0.35)"
               strokeDasharray="4 6"
             />
