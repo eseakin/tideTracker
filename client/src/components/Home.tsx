@@ -11,11 +11,12 @@ const STATION_IDS = {
 }
 
 const DATE_FORMAT = "YYYYMMDD"
+const STARTING_DATE = dayjs("2025-11-05")
 
 const getUrl = () => {
   const base = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-  const begin_date = dayjs().format(DATE_FORMAT)
-  const end_date = dayjs().add(7, "day").format(DATE_FORMAT)
+  const begin_date = STARTING_DATE.format(DATE_FORMAT)
+  const end_date = STARTING_DATE.add(7, "day").format(DATE_FORMAT)
   const station = STATION_IDS.MONTEREY
   const product = "predictions"
   const datum = "MLLW"

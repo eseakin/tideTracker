@@ -64,6 +64,9 @@ const TideChart: React.FC<Props> = ({
   const PAD = 24
   const BOTTOM_PAD = 60
 
+  // Max height (feet) to consider a low tide for labeling/markers
+  const LOW_TIDE_MAX_FT = 1.5
+
   // Filter extremes to only show significant ones (more than 1 foot from neighbors)
   const significantExtremes = useMemo(() => {
     if (extremesParsed.length === 0) return []
@@ -81,10 +84,16 @@ const TideChart: React.FC<Props> = ({
     })
   }, [extremesParsed])
 
-  // Lowest daytime (9am-6pm) low tide height among significant lows
+  // Only lows at or below threshold
+  const filteredLowExtremes = useMemo(() => {
+    return significantExtremes.filter(
+      (e) => e.type === "L" && e.h <= LOW_TIDE_MAX_FT
+    )
+  }, [significantExtremes])
+
+  // Lowest daytime (9am-6pm) low tide height among filtered lows
   const lowestDaytimeLow = useMemo(() => {
-    const lows = significantExtremes.filter((e) => {
-      if (e.type !== "L") return false
+    const lows = filteredLowExtremes.filter((e) => {
       const d = new Date(e.t)
       const hours = d.getHours()
       const minutes = d.getMinutes()
@@ -92,7 +101,7 @@ const TideChart: React.FC<Props> = ({
       return hourOfDay >= 9 && hourOfDay < 18
     })
     return lows.length ? Math.min(...lows.map((e) => e.h)) : Infinity
-  }, [significantExtremes])
+  }, [filteredLowExtremes])
 
   const { path, xNow, yNow, y, x, hMin, hMax, dayTicks } = useMemo(() => {
     const W = dimensions.width
@@ -219,109 +228,105 @@ const TideChart: React.FC<Props> = ({
 
         {/* Optional H/L markers (when extremes provided) - only low tides */}
         {showMarkers &&
-          significantExtremes.filter((e) => e.type === "L").length > 0 &&
-          significantExtremes
-            .filter((e) => e.type === "L")
-            .map((e) => {
-              const date = new Date(e.t)
-              const hours = date.getHours()
-              const minutes = date.getMinutes()
-              const hourOfDay = hours + minutes / 60
-              const isDaytime = hourOfDay >= 9 && hourOfDay < 18
-              const isTopCandidate =
-                isDaytime &&
-                Number.isFinite(lowestDaytimeLow) &&
-                Math.abs(e.h - lowestDaytimeLow) <= 8 / 12
+          filteredLowExtremes.length > 0 &&
+          filteredLowExtremes.map((e) => {
+            const date = new Date(e.t)
+            const hours = date.getHours()
+            const minutes = date.getMinutes()
+            const hourOfDay = hours + minutes / 60
+            const isDaytime = hourOfDay >= 9 && hourOfDay < 18
+            const isTopCandidate =
+              isDaytime &&
+              Number.isFinite(lowestDaytimeLow) &&
+              Math.abs(e.h - lowestDaytimeLow) <= 8 / 12
 
-              return (
-                <g key={e.t}>
-                  {isTopCandidate && (
-                    <circle
-                      cx={x(date)}
-                      cy={y(e.h)}
-                      r="12"
-                      fill="rgba(255, 215, 0, 0.35)"
-                      stroke="rgba(255, 215, 0, 0.95)"
-                      strokeWidth="2.5"
-                    />
-                  )}
-                  {!isTopCandidate && isDaytime && (
-                    <circle
-                      cx={x(date)}
-                      cy={y(e.h)}
-                      r="8"
-                      fill="rgba(255, 215, 0, 0.3)"
-                      stroke="rgba(255, 215, 0, 0.6)"
-                      strokeWidth="1.5"
-                    />
-                  )}
+            return (
+              <g key={e.t}>
+                {isTopCandidate && (
                   <circle
                     cx={x(date)}
                     cy={y(e.h)}
-                    r={isTopCandidate ? "6" : isDaytime ? "4" : "3"}
-                    fill={
-                      isTopCandidate
-                        ? "#ffd700"
-                        : isDaytime
-                          ? "#ffd700"
-                          : "rgba(255,255,255,0.5)"
-                    }
+                    r="12"
+                    fill="rgba(255, 215, 0, 0.35)"
+                    stroke="rgba(255, 215, 0, 0.95)"
+                    strokeWidth="2.5"
                   />
-                  <text
-                    x={x(date)}
-                    y={y(e.h) + 20}
-                    textAnchor="middle"
-                    fontSize="13"
-                    fill={
-                      isTopCandidate
+                )}
+                {!isTopCandidate && isDaytime && (
+                  <circle
+                    cx={x(date)}
+                    cy={y(e.h)}
+                    r="8"
+                    fill="rgba(255, 215, 0, 0.3)"
+                    stroke="rgba(255, 215, 0, 0.6)"
+                    strokeWidth="1.5"
+                  />
+                )}
+                <circle
+                  cx={x(date)}
+                  cy={y(e.h)}
+                  r={isTopCandidate ? "6" : isDaytime ? "4" : "3"}
+                  fill={
+                    isTopCandidate
+                      ? "#ffd700"
+                      : isDaytime
                         ? "#ffd700"
-                        : isDaytime
-                          ? "#ffd700"
-                          : "rgba(255,255,255,0.5)"
-                    }
-                    fontWeight={isTopCandidate || isDaytime ? "bold" : "normal"}
-                  >
-                    {Math.round(e.h * 10) / 10}′
-                  </text>
-                </g>
-              )
-            })}
-
-        {/* Time labels - only on low tides */}
-        {significantExtremes
-          .filter((e) => e.type === "L")
-          .map((e, i) => {
-            const date = new Date(e.t)
-            const xPos = x(date)
-            const hours = date.getHours()
-            const minutes = date.getMinutes()
-            const timeStr =
-              hours === 0 && minutes === 0
-                ? "12 AM"
-                : hours === 12 && minutes === 0
-                  ? "12 PM"
-                  : hours === 0
-                    ? `12:${minutes.toString().padStart(2, "0")} AM`
-                    : hours < 12
-                      ? `${hours}:${minutes.toString().padStart(2, "0")} AM`
-                      : hours === 12
-                        ? `12:${minutes.toString().padStart(2, "0")} PM`
-                        : `${hours - 12}:${minutes.toString().padStart(2, "0")} PM`
-
-            return (
-              <g key={`low-tide-time-${i}`}>
+                        : "rgba(255,255,255,0.5)"
+                  }
+                />
                 <text
-                  x={xPos}
-                  y={dimensions.height - BOTTOM_PAD + 15}
+                  x={x(date)}
+                  y={y(e.h) + (isDaytime ? 25 : 20)}
                   textAnchor="middle"
-                  fontSize="14"
-                  fill="rgba(255,255,255,0.75)"
+                  fontSize="13"
+                  fill={
+                    isTopCandidate
+                      ? "#ffd700"
+                      : isDaytime
+                        ? "#ffd700"
+                        : "rgba(255,255,255,0.5)"
+                  }
+                  fontWeight={isTopCandidate || isDaytime ? "bold" : "normal"}
                 >
-                  {timeStr}
+                  {Math.round(e.h * 10) / 10}′
                 </text>
               </g>
             )
           })}
+
+        {/* Time labels - only on low tides */}
+        {filteredLowExtremes.map((e, i) => {
+          const date = new Date(e.t)
+          const xPos = x(date)
+          const hours = date.getHours()
+          const minutes = date.getMinutes()
+          const timeStr =
+            hours === 0 && minutes === 0
+              ? "12 AM"
+              : hours === 12 && minutes === 0
+                ? "12 PM"
+                : hours === 0
+                  ? `12:${minutes.toString().padStart(2, "0")} AM`
+                  : hours < 12
+                    ? `${hours}:${minutes.toString().padStart(2, "0")} AM`
+                    : hours === 12
+                      ? `12:${minutes.toString().padStart(2, "0")} PM`
+                      : `${hours - 12}:${minutes.toString().padStart(2, "0")} PM`
+
+          return (
+            <g key={`low-tide-time-${i}`}>
+              <text
+                x={xPos}
+                y={dimensions.height - BOTTOM_PAD + 15}
+                textAnchor="middle"
+                fontSize="14"
+                fill="rgba(255,255,255,0.75)"
+              >
+                {timeStr}
+              </text>
+            </g>
+          )
+        })}
 
         {/* Date labels (once per day) */}
         {dayTicks.map((date: Date, i: number) => {
