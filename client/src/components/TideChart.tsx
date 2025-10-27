@@ -30,6 +30,8 @@ const TideChart: React.FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const pathRef = useRef<SVGPathElement>(null)
   const markerRefs = useRef<Map<number, SVGGElement>>(new Map())
+  const timeLabelRefs = useRef<Map<number, SVGGElement>>(new Map())
+  const dayLabelRefs = useRef<Map<number, SVGGElement>>(new Map())
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
 
   useEffect(() => {
@@ -185,6 +187,69 @@ const TideChart: React.FC<Props> = ({
       }
     })
   }, [filteredLowExtremes])
+
+  // Animate time labels
+  useEffect(() => {
+    const currentIds = new Set(filteredLowExtremes.map((e) => e.t))
+
+    // Slide out and fade labels that are no longer in data
+    timeLabelRefs.current.forEach((node, id) => {
+      if (!currentIds.has(id)) {
+        const xPos = d3.select(node).attr("x")
+        d3.select(node)
+          .transition()
+          .duration(300)
+          .style("opacity", 0)
+          .attr("x", parseFloat(xPos) - 100)
+          .remove()
+      }
+    })
+
+    // Slide in new labels
+    filteredLowExtremes.forEach((e) => {
+      const node = timeLabelRefs.current.get(e.t)
+      if (node) {
+        const xPos = d3.select(node).attr("x")
+        d3.select(node)
+          .attr("x", parseFloat(xPos) + 100)
+          .transition()
+          .duration(800)
+          .style("opacity", 1)
+          .attr("x", xPos)
+      }
+    })
+  }, [filteredLowExtremes])
+
+  // Animate day labels
+  useEffect(() => {
+    const currentIds = new Set(dayTicks.map((d) => d.getTime()))
+
+    // Slide out and fade labels that are no longer in data
+    dayLabelRefs.current.forEach((node, id) => {
+      if (!currentIds.has(id)) {
+        const yPos = d3.select(node).select("text").attr("y")
+        d3.select(node)
+          .transition()
+          .duration(300)
+          .style("opacity", 0)
+          .attr("transform", `translate(-100, 0)`)
+          .remove()
+      }
+    })
+
+    // Slide in new labels
+    dayTicks.forEach((d, i) => {
+      const node = dayLabelRefs.current.get(d.getTime())
+      if (node) {
+        d3.select(node)
+          .attr("transform", "translate(100, 0)")
+          .transition()
+          .duration(800)
+          .style("opacity", 1)
+          .attr("transform", "translate(0, 0)")
+      }
+    })
+  }, [dayTicks])
 
   return (
     <div
@@ -347,7 +412,13 @@ const TideChart: React.FC<Props> = ({
           const timeStr = dayjs(date).format("h:mm A")
 
           return (
-            <g key={`low-tide-time-${i}`}>
+            <g
+              key={`low-tide-time-${i}`}
+              ref={(el) => {
+                if (el) timeLabelRefs.current.set(e.t, el)
+              }}
+              style={{ opacity: 0 }}
+            >
               <text
                 x={xPos}
                 y={dimensions.height - BOTTOM_PAD + 20}
@@ -373,7 +444,13 @@ const TideChart: React.FC<Props> = ({
           const label = `${dayName} ${monthDay}`
 
           return (
-            <g key={`date-label-${i}`}>
+            <g
+              key={`date-label-${i}`}
+              ref={(el) => {
+                if (el) dayLabelRefs.current.set(date.getTime(), el)
+              }}
+              style={{ opacity: 0 }}
+            >
               <text
                 x={xPos + 3}
                 y={PAD}
