@@ -29,6 +29,7 @@ const TideChart: React.FC<Props> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const pathRef = useRef<SVGPathElement>(null)
+  const markerRefs = useRef<Map<number, SVGGElement>>(new Map())
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
 
   useEffect(() => {
@@ -152,9 +153,38 @@ const TideChart: React.FC<Props> = ({
   useEffect(() => {
     if (pathRef.current && series.length > 0) {
       const node = d3.select(pathRef.current)
-      node.transition().duration(800).ease(d3.easeExpInOut).attr("d", path!)
+      // Store initial path
+      const currentPath = node.attr("d")
+
+      // Only animate if we have a prior path to transition from
+      if (currentPath) {
+        node.transition().duration(800).ease(d3.easeExpInOut).attr("d", path!)
+      } else {
+        // First render, just set it
+        node.attr("d", path!)
+      }
     }
   }, [path])
+
+  // Animate markers
+  useEffect(() => {
+    const currentIds = new Set(filteredLowExtremes.map((e) => e.t))
+
+    // Fade out markers that are no longer in data
+    markerRefs.current.forEach((node, id) => {
+      if (!currentIds.has(id)) {
+        d3.select(node).transition().duration(300).style("opacity", 0).remove()
+      }
+    })
+
+    // Fade in new markers
+    filteredLowExtremes.forEach((e) => {
+      const node = markerRefs.current.get(e.t)
+      if (node) {
+        d3.select(node).transition().duration(800).style("opacity", 1)
+      }
+    })
+  }, [filteredLowExtremes])
 
   return (
     <div
@@ -229,7 +259,7 @@ const TideChart: React.FC<Props> = ({
         })}
 
         {/* Tide area */}
-        <path ref={pathRef} d={path} fill="url(#water)" opacity="0.95" />
+        <path ref={pathRef} fill="url(#water)" opacity="0.95" />
 
         {/* Ripple overlay clipped to area */}
         <g style={{ mixBlendMode: "screen" }}>
@@ -251,7 +281,13 @@ const TideChart: React.FC<Props> = ({
               Math.abs(e.h - lowestDaytimeLow) <= 8 / 12
 
             return (
-              <g key={e.t}>
+              <g
+                key={e.t}
+                ref={(el) => {
+                  if (el) markerRefs.current.set(e.t, el)
+                }}
+                style={{ opacity: 0 }}
+              >
                 {isTopCandidate && (
                   <circle
                     cx={x(date)}
