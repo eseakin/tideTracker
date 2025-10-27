@@ -67,10 +67,30 @@ const Home = () => {
           paddingTop: 100,
         }}
       >
-        <h2>Tide tracker!</h2>
-        <Flex gap={8}>
-          <Button onClick={() => shiftDate(-7)}>← Week Before</Button>
-          <Button onClick={() => shiftDate(+7)}>Week After →</Button>
+        <h1 style={{ color: "white", fontSize: 36 }}>Upcoming Tides</h1>
+        <Flex gap={20}>
+          <Button
+            onClick={() => shiftDate(-7)}
+            style={{
+              backgroundColor: "#2e8bc0",
+              color: "white",
+              borderColor: "#2e8bc0",
+              padding: "20px",
+            }}
+          >
+            ← Week Before
+          </Button>
+          <Button
+            onClick={() => shiftDate(+7)}
+            style={{
+              backgroundColor: "#2e8bc0",
+              color: "white",
+              borderColor: "#2e8bc0",
+              padding: "20px",
+            }}
+          >
+            Week After →
+          </Button>
         </Flex>
         <div style={{ width: "90%", height: 500 }}>
           <TideChart extremes={extremes} stepMin={1} showMarkers />
