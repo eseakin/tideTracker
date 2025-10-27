@@ -72,7 +72,7 @@ const Home = () => {
           <Button onClick={() => shiftDate(-7)}>← Week Before</Button>
           <Button onClick={() => shiftDate(+7)}>Week After →</Button>
         </Flex>
-        <div style={{ width: "90%", maxWidth: 1200, height: 500 }}>
+        <div style={{ width: "90%", height: 500 }}>
           <TideChart extremes={extremes} stepMin={1} showMarkers />
         </div>
       </Flex>

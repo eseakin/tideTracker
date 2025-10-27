@@ -6,6 +6,7 @@ import {
   upsampleExtremesToSeries,
 } from "#utils/dataHelpers"
 import * as d3 from "d3"
+import dayjs from "dayjs"
 import React, { useEffect, useMemo, useRef, useState } from "react"
 
 type Props = {
@@ -27,6 +28,7 @@ const TideChart: React.FC<Props> = ({
   height: propHeight,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
+  const pathRef = useRef<SVGPathElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
 
   useEffect(() => {
@@ -61,8 +63,8 @@ const TideChart: React.FC<Props> = ({
     return { series: ser, extremesParsed: ex }
   }, [extremes, stepMin])
 
-  const PAD = 24
-  const BOTTOM_PAD = 60
+  const PAD = 0
+  const BOTTOM_PAD = 30
 
   // Max height (feet) to consider a low tide for labeling/markers
   const LOW_TIDE_MAX_FT = 1.5
@@ -146,6 +148,14 @@ const TideChart: React.FC<Props> = ({
     return { path, xNow, yNow, y, x, hMin, hMax, dayTicks }
   }, [series, dimensions.width, dimensions.height])
 
+  // Animate path changes
+  useEffect(() => {
+    if (pathRef.current && series.length > 0) {
+      const node = d3.select(pathRef.current)
+      node.transition().duration(800).ease(d3.easeExpInOut).attr("d", path!)
+    }
+  }, [path])
+
   return (
     <div
       ref={containerRef}
@@ -219,7 +229,7 @@ const TideChart: React.FC<Props> = ({
         })}
 
         {/* Tide area */}
-        <path d={path} fill="url(#water)" opacity="0.95" />
+        <path ref={pathRef} d={path} fill="url(#water)" opacity="0.95" />
 
         {/* Ripple overlay clipped to area */}
         <g style={{ mixBlendMode: "screen" }}>
@@ -298,26 +308,13 @@ const TideChart: React.FC<Props> = ({
         {filteredLowExtremes.map((e, i) => {
           const date = new Date(e.t)
           const xPos = x(date)
-          const hours = date.getHours()
-          const minutes = date.getMinutes()
-          const timeStr =
-            hours === 0 && minutes === 0
-              ? "12 AM"
-              : hours === 12 && minutes === 0
-                ? "12 PM"
-                : hours === 0
-                  ? `12:${minutes.toString().padStart(2, "0")} AM`
-                  : hours < 12
-                    ? `${hours}:${minutes.toString().padStart(2, "0")} AM`
-                    : hours === 12
-                      ? `12:${minutes.toString().padStart(2, "0")} PM`
-                      : `${hours - 12}:${minutes.toString().padStart(2, "0")} PM`
+          const timeStr = dayjs(date).format("h:mm A")
 
           return (
             <g key={`low-tide-time-${i}`}>
               <text
                 x={xPos}
-                y={dimensions.height - BOTTOM_PAD + 15}
+                y={dimensions.height - BOTTOM_PAD + 20}
                 textAnchor="middle"
                 fontSize="14"
                 fill="rgba(255,255,255,0.75)"

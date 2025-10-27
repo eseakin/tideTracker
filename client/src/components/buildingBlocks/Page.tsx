@@ -8,11 +8,10 @@ const Page = ({ children }: { children: ReactNode }) => {
       animation={ANIMATION_BY_KEY.down}
       style={{
         width: "100vw",
-        height: "calc(100vh - 46px)",
+        height: "100vh",
         justifyContent: "center",
         overflow: "hidden",
-        background:
-          "radial-gradient(circle at 55% 23.33%, #fff 0%, #f7f5f3 100%)",
+        background: "#0a2540",
       }}
     >
       {children}
