@@ -201,7 +201,8 @@ const TideChart: React.FC<Props> = ({
                 y1={PAD}
                 x2={xPos}
                 y2={dimensions.height - BOTTOM_PAD}
-                stroke="rgba(255,255,255,0.15)"
+                stroke="#3aa0ff"
+                strokeOpacity="0.7"
                 strokeWidth="1.5"
               />
             </g>
@@ -313,7 +314,7 @@ const TideChart: React.FC<Props> = ({
                   x={xPos}
                   y={dimensions.height - BOTTOM_PAD + 15}
                   textAnchor="middle"
-                  fontSize="10"
+                  fontSize="14"
                   fill="rgba(255,255,255,0.75)"
                 >
                   {timeStr}
@@ -331,17 +332,22 @@ const TideChart: React.FC<Props> = ({
             day: "numeric",
           })
 
+          const label = `${dayName} ${monthDay}`
+
           return (
             <g key={`date-label-${i}`}>
               <text
-                x={xPos}
-                y={dimensions.height - BOTTOM_PAD + 50}
-                textAnchor="middle"
-                fontSize="14"
+                x={xPos + 3}
+                y={PAD}
+                transform={`rotate(180 ${xPos + 3}, ${PAD})`}
+                textAnchor="end"
+                dominantBaseline="hanging"
+                fontSize="36"
                 fontWeight="bold"
-                fill="rgba(255,255,255,0.9)"
+                fill="rgba(58,160,255,0.25)"
+                style={{ writingMode: "vertical-rl" }}
               >
-                {dayName} {monthDay}
+                {label}
               </text>
             </g>
           )
