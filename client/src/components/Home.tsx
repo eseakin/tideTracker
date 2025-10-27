@@ -1,7 +1,7 @@
 import { Extreme } from "#customTypes/dataTypes"
 import { Button } from "antd"
-import dayjs from "dayjs"
-import { useState } from "react"
+import dayjs, { Dayjs } from "dayjs"
+import { useEffect, useState } from "react"
 import Flex from "./buildingBlocks/Flex"
 import Page from "./buildingBlocks/Page"
 import TideChart from "./TideChart"
@@ -11,12 +11,12 @@ const STATION_IDS = {
 }
 
 const DATE_FORMAT = "YYYYMMDD"
-const STARTING_DATE = dayjs("2025-11-05")
+const STARTING_DATE = dayjs()
 
-const getUrl = () => {
+const getUrl = (baseDate: Dayjs) => {
   const base = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-  const begin_date = STARTING_DATE.format(DATE_FORMAT)
-  const end_date = STARTING_DATE.add(7, "day").format(DATE_FORMAT)
+  const begin_date = baseDate.format(DATE_FORMAT)
+  const end_date = baseDate.add(7, "day").format(DATE_FORMAT)
   const station = STATION_IDS.MONTEREY
   const product = "predictions"
   const datum = "MLLW"
@@ -31,15 +31,30 @@ const getUrl = () => {
 
 const Home = () => {
   const [extremes, setExtremes] = useState<Extreme[]>([])
-  const onClick = () => {
-    const url = getUrl()
+  const [displayDate, setDisplayDate] = useState(STARTING_DATE)
+
+  const fetchData = () => {
+    const url = getUrl(displayDate)
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
         console.log(data.predictions)
         setExtremes(data.predictions)
       })
+      .catch((err) => {
+        console.error("Failed to fetch tide data:", err)
+        setExtremes([])
+      })
   }
+
+  useEffect(() => {
+    fetchData()
+  }, [displayDate])
+
+  const shiftDate = (days: number) => {
+    setDisplayDate((d) => d.add(days, "day"))
+  }
+
   return (
     <Page>
       <Flex
@@ -53,8 +68,9 @@ const Home = () => {
         }}
       >
         <h2>Tide tracker!</h2>
-        <Flex>
-          <Button onClick={onClick}>Get tide data</Button>
+        <Flex gap={8}>
+          <Button onClick={() => shiftDate(-7)}>← Week Before</Button>
+          <Button onClick={() => shiftDate(+7)}>Week After →</Button>
         </Flex>
         <div style={{ width: "90%", maxWidth: 1200, height: 500 }}>
           <TideChart extremes={extremes} stepMin={1} showMarkers />
