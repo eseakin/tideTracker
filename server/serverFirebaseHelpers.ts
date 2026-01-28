@@ -1,11 +1,9 @@
 import type { DocumentData } from "firebase-admin/firestore"
-import { chunk, isEmpty } from "lodash"
+import { chunk } from "lodash"
 import { DOC_TYPES, Uuid } from "types/globalTypes"
 
 import firebaseAdmin from "firebase-admin"
 import { getFirestore } from "firebase-admin/firestore"
-import { readFileSync } from "fs"
-import path from "path"
 
 let firebaseClient
 
@@ -23,16 +21,18 @@ export const createFirebaseClient = () => {
           process.env.FIREBASE_SERVICE_ACCOUNT_KEY
         )
       } else {
+        return
         // Fallback to file for local development
-        firebaseServiceAccount = JSON.parse(
-          readFileSync(path.join(__dirname, "./firebase-sdk-key.json"), "utf-8")
-        )
-        if (isEmpty(firebaseServiceAccount)) {
-          throw new Error(
-            "Couldn't find Firebase service account key! Make sure it's in the .env file or in the firebase-sdk-key.json file"
-          )
-        }
-        console.log("Using Firebase service account key from file")
+        // firebaseServiceAccount = JSON.parse(
+        //   readFileSync(path.join(__dirname, "./firebase-sdk-key.json"), "utf-8")
+        // )
+        // if (isEmpty(firebaseServiceAccount)) {
+        //   console.warn(
+        //     "Couldn't find Firebase service account key! Make sure it's in the .env file or in the firebase-sdk-key.json file"
+        //   )
+        //   return
+        // }
+        // console.log("Using Firebase service account key from file")
       }
 
       // Ensure we don't accidentally point admin SDK to local emulator unless explicitly requested

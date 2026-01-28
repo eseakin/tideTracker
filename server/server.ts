@@ -11,7 +11,7 @@ import express from "express"
 import path from "path"
 
 const isProduction = process.env.PRODUCTION === "true"
-const PRODUCTION_URL = "https://yourapphere.herokuapp.com"
+const PRODUCTION_URL = "https://tidetracker-f608029edeba.herokuapp.com/"
 
 // Initialize Express
 const app = express()
