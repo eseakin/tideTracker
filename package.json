@@ -1,8 +1,8 @@
 {
-  "name": "newProjectTemplate",
+  "name": "tideTracker",
   "author": "Eric Eakin",
   "license": "none",
-  "repository": "https://github.com/eseakin/newProjectTemplate",
+  "repository": "https://github.com/eseakin/tideTracker",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -11,29 +11,29 @@
     "yarn": "^1.22.19"
   },
   "scripts": {
-    "dev": "yarn workspace newProjectTemplate-client dev",
-    "dev:server": "yarn workspace newProjectTemplate-server dev",
+    "dev": "yarn workspace tideTracker-client dev",
+    "dev:server": "yarn workspace tideTracker-server dev",
     "start": "node server/dist/server.js",
-    "build": "yarn workspace newProjectTemplate-client build && yarn workspace newProjectTemplate-server build",
+    "build": "yarn workspace tideTracker-client build && yarn workspace tideTracker-server build",
     "firebase": "firebase emulators:start --import=./emulatorDb --export-on-exit=./emulatorDb",
     "heroku-postbuild": "yarn build",
-    "lint": "yarn workspace newProjectTemplate-client lint",
-    "fix": "yarn workspace newProjectTemplate-client fix",
-    "preview": "yarn workspace newProjectTemplate-client preview",
-    "postinstall": "yarn workspace newProjectTemplate-server install",
-    "install:all": "yarn install && yarn workspace newProjectTemplate-client install && yarn workspace newProjectTemplate-server install",
-    "test": "yarn workspace newProjectTemplate-client test",
-    "test:watch": "yarn workspace newProjectTemplate-client test:watch",
-    "set-cors": "gsutil cors set /Users/eseakin/dev/newProjectTemplate/cors.json gs://firestore-test-d50d6.firebasestorage.app"
+    "lint": "yarn workspace tideTracker-client lint",
+    "fix": "yarn workspace tideTracker-client fix",
+    "preview": "yarn workspace tideTracker-client preview",
+    "postinstall": "yarn workspace tideTracker-server install",
+    "install:all": "yarn install && yarn workspace tideTracker-client install && yarn workspace tideTracker-server install",
+    "test": "yarn workspace tideTracker-client test",
+    "test:watch": "yarn workspace tideTracker-client test:watch",
+    "set-cors": "gsutil cors set /Users/eseakin/dev/tideTracker/cors.json gs://firestore-test-d50d6.firebasestorage.app"
   },
   "dependencies": {
     "dayjs": "^1.11.13",
     "dayjs-plugin-utc": "^0.1.2",
     "dayjs-timezone-iana-plugin": "^0.1.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "vite": "^4.3.2"
   },
   "devDependencies": {
-    "vite": "^4.3.2",
     "vite-plugin-checker": "^0.6.0",
     "vite-tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.0",

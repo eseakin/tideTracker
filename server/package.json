@@ -1,8 +1,8 @@
 {
-  "name": "newProjectTemplate-server",
+  "name": "tideTracker-server",
   "version": "0.0.1",
   "type": "commonjs",
-  "description": "Server for newProjectTemplate",
+  "description": "Server for tideTracker",
   "main": "server.js",
   "author": "Eric Eakin",
   "license": "none",
