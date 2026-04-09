@@ -32,7 +32,11 @@ const TideChart: React.FC<Props> = ({
   const markerRefs = useRef<Map<number, SVGGElement>>(new Map())
   const timeLabelRefs = useRef<Map<number, SVGGElement>>(new Map())
   const dayLabelRefs = useRef<Map<number, SVGGElement>>(new Map())
-  const [dimensions, setDimensions] = useState({ width: 800, height: 400 })
+  const MIN_CHART_WIDTH = 1000
+  const [dimensions, setDimensions] = useState({
+    width: MIN_CHART_WIDTH,
+    height: 400,
+  })
 
   useEffect(() => {
     if (propWidth && propHeight) {
@@ -43,7 +47,10 @@ const TideChart: React.FC<Props> = ({
     const updateDimensions = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect()
-        setDimensions({ width, height: height || 400 })
+        setDimensions({
+          width: Math.max(width, MIN_CHART_WIDTH),
+          height: height || 400,
+        })
       }
     }
 
@@ -254,12 +261,12 @@ const TideChart: React.FC<Props> = ({
   return (
     <div
       ref={containerRef}
-      style={{ width: "100%", height: "100%", minHeight: dimensions.height }}
+      style={{ width: "100%", height: "100%", overflowX: "auto" }}
     >
       <svg
         viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-        width="100%"
-        height="100%"
+        width={dimensions.width}
+        height={dimensions.height}
         role="img"
         aria-label="Tide height over time"
       >

@@ -64,7 +64,8 @@ const Home = () => {
         style={{
           alignItems: "center",
           justifyContent: "flex-start",
-          paddingTop: 100,
+          paddingTop: 50,
+          overflow: "auto",
         }}
       >
         <h1 style={{ color: "white", fontSize: 36 }}>Upcoming Tides</h1>
@@ -92,7 +93,14 @@ const Home = () => {
             Week After →
           </Button>
         </Flex>
-        <div style={{ width: "90%", height: 500 }}>
+        <div
+          style={{
+            width: "90%",
+            minHeight: 400,
+            maxHeight: 500,
+            marginBottom: 20,
+          }}
+        >
           <TideChart extremes={extremes} stepMin={1} showMarkers />
         </div>
       </Flex>

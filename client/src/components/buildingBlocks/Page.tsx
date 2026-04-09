@@ -10,7 +10,8 @@ const Page = ({ children }: { children: ReactNode }) => {
         width: "100vw",
         height: "100vh",
         justifyContent: "center",
-        overflow: "hidden",
+        minHeight: "100vh",
+        overflow: "auto",
         background: "#0a2540",
       }}
     >
