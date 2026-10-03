@@ -17,7 +17,9 @@ const PRODUCTION_URL = "https://tidetracker-f608029edeba.herokuapp.com/"
 const app = express()
 app.use(express.json())
 
-// Only serve static files if in production or if dist folder exists
+// Only serve static files if in production or if dist folder exists.
+// Files in client/dist are served at the site root, so /assets/app.js
+// maps to client/dist/assets/app.js.
 const distPath = path.join(__dirname, "../../client/dist")
 const shouldServeStatic = isProduction
 
@@ -51,6 +53,12 @@ app.get(`${ROUTE_PREFIX}/someRoute`, (req: Request, res: Response) => {})
 // In development, return a helpful message for non-API routes
 if (shouldServeStatic) {
   app.use((req: Request, res: Response) => {
+    // A missing script should 404. Sending index.html made the browser
+    // try to run HTML as a module script.
+    if (path.extname(req.path)) {
+      res.status(404).type("text/plain").send("Not found")
+      return
+    }
     res.sendFile(path.join(distPath, "index.html"))
   })
 } else {
