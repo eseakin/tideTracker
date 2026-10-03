@@ -55,6 +55,17 @@ const Home = () => {
     setDisplayDate((d) => d.add(days, "day"))
   }
 
+  const goToToday = () => {
+    setDisplayDate(dayjs())
+  }
+
+  const buttonStyle = {
+    backgroundColor: "#2e8bc0",
+    color: "white",
+    borderColor: "#2e8bc0",
+    padding: "20px",
+  }
+
   return (
     <Page>
       <Flex
@@ -70,26 +81,13 @@ const Home = () => {
       >
         <h1 style={{ color: "white", fontSize: 36 }}>Upcoming Tides</h1>
         <Flex gap={20}>
-          <Button
-            onClick={() => shiftDate(-7)}
-            style={{
-              backgroundColor: "#2e8bc0",
-              color: "white",
-              borderColor: "#2e8bc0",
-              padding: "20px",
-            }}
-          >
+          <Button onClick={() => shiftDate(-7)} style={buttonStyle}>
             ← Week Before
           </Button>
-          <Button
-            onClick={() => shiftDate(+7)}
-            style={{
-              backgroundColor: "#2e8bc0",
-              color: "white",
-              borderColor: "#2e8bc0",
-              padding: "20px",
-            }}
-          >
+          <Button onClick={goToToday} style={buttonStyle}>
+            Today
+          </Button>
+          <Button onClick={() => shiftDate(+7)} style={buttonStyle}>
             Week After →
           </Button>
         </Flex>
