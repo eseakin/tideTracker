@@ -9,6 +9,14 @@ import * as d3 from "d3"
 import dayjs from "dayjs"
 import React, { useEffect, useMemo, useRef, useState } from "react"
 
+const DAYTIME_HOURS = { start: 6, end: 18 }
+
+const isDaytimeTide = (t: number) => {
+  const date = new Date(t)
+  const hourOfDay = date.getHours() + date.getMinutes() / 60
+  return hourOfDay >= DAYTIME_HOURS.start && hourOfDay < DAYTIME_HOURS.end
+}
+
 type Props = {
   // Provide ONE of these:
   extremes?: Extreme[]
@@ -37,6 +45,20 @@ const TideChart: React.FC<Props> = ({
     width: MIN_CHART_WIDTH,
     height: 400,
   })
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    let timeoutId = 0
+    const schedule = () => {
+      const msUntilNextMinute = 60_000 - (Date.now() % 60_000)
+      timeoutId = window.setTimeout(() => {
+        setNow(Date.now())
+        schedule()
+      }, msUntilNextMinute)
+    }
+    schedule()
+    return () => window.clearTimeout(timeoutId)
+  }, [])
 
   useEffect(() => {
     if (propWidth && propHeight) {
@@ -103,19 +125,13 @@ const TideChart: React.FC<Props> = ({
     )
   }, [significantExtremes])
 
-  // Lowest daytime (9am-6pm) low tide height among filtered lows
+  // Lowest daytime low tide height among filtered lows
   const lowestDaytimeLow = useMemo(() => {
-    const lows = filteredLowExtremes.filter((e) => {
-      const d = new Date(e.t)
-      const hours = d.getHours()
-      const minutes = d.getMinutes()
-      const hourOfDay = hours + minutes / 60
-      return hourOfDay >= 9 && hourOfDay < 18
-    })
+    const lows = filteredLowExtremes.filter((e) => isDaytimeTide(e.t))
     return lows.length ? Math.min(...lows.map((e) => e.h)) : Infinity
   }, [filteredLowExtremes])
 
-  const { path, xNow, yNow, y, x, hMin, hMax, dayTicks } = useMemo(() => {
+  const { path, y, x, hMin, hMax, dayTicks } = useMemo(() => {
     const W = dimensions.width
     const H = dimensions.height
 
@@ -143,11 +159,6 @@ const TideChart: React.FC<Props> = ({
 
     const path = area(series)!
 
-    const now = Date.now()
-    const hNow = interpAt(now, series)
-    const xNow = x(new Date(now))
-    const yNow = y(hNow)
-
     // Generate day ticks (for bold marks)
     const dayTicks = d3
       .scaleTime()
@@ -155,8 +166,22 @@ const TideChart: React.FC<Props> = ({
       .range([PAD, W - PAD])
       .ticks(d3.timeDay)
 
-    return { path, xNow, yNow, y, x, hMin, hMax, dayTicks }
+    return { path, y, x, hMin, hMax, dayTicks }
   }, [series, dimensions.width, dimensions.height])
+
+  const { xNow, yNow, showNow } = useMemo(() => {
+    if (!series.length) {
+      return { xNow: NaN, yNow: NaN, showNow: false }
+    }
+    const start = series[0].t
+    const end = series[series.length - 1].t
+    const hNow = interpAt(now, series)
+    return {
+      xNow: x(new Date(now)),
+      yNow: y(hNow),
+      showNow: now >= start && now <= end && Number.isFinite(hNow),
+    }
+  }, [now, series, x, y])
 
   // Animate path changes
   useEffect(() => {
@@ -343,10 +368,7 @@ const TideChart: React.FC<Props> = ({
           filteredLowExtremes.length > 0 &&
           filteredLowExtremes.map((e) => {
             const date = new Date(e.t)
-            const hours = date.getHours()
-            const minutes = date.getMinutes()
-            const hourOfDay = hours + minutes / 60
-            const isDaytime = hourOfDay >= 9 && hourOfDay < 18
+            const isDaytime = isDaytimeTide(e.t)
             const isTopCandidate =
               isDaytime &&
               Number.isFinite(lowestDaytimeLow) &&
@@ -475,20 +497,44 @@ const TideChart: React.FC<Props> = ({
           )
         })}
 
-        {/* Now marker */}
-        {Number.isFinite(xNow) && Number.isFinite(yNow) && (
-          <>
+        {/* Current time marker */}
+        {showNow && Number.isFinite(xNow) && Number.isFinite(yNow) && (
+          <g>
             <line
               x1={xNow}
               x2={xNow}
-              y1={16}
+              y1={22}
               y2={dimensions.height - BOTTOM_PAD}
-              stroke="rgba(255,255,255,0.35)"
-              strokeWidth="3"
+              stroke="rgba(226,59,59,0.45)"
+              strokeWidth="2"
               strokeDasharray="4 6"
             />
-            <circle cx={xNow} cy={yNow} r="4" fill="#fff" />
-          </>
+            <circle
+              cx={xNow}
+              cy={yNow}
+              r="6"
+              fill="#e23b3b"
+              stroke="#fff"
+              strokeWidth="1.5"
+            />
+            <text
+              x={
+                xNow < 48 ? xNow + 10 : xNow > dimensions.width - 48 ? xNow - 10 : xNow
+              }
+              y={yNow > 36 ? yNow - 14 : yNow + 22}
+              textAnchor={
+                xNow < 48 ? "start" : xNow > dimensions.width - 48 ? "end" : "middle"
+              }
+              fontSize="13"
+              fontWeight="600"
+              fill="#ff5a5a"
+              stroke="#0a2540"
+              strokeWidth="3"
+              paintOrder="stroke"
+            >
+              {dayjs(now).format("h:mm a")}
+            </text>
+          </g>
         )}
       </svg>
     </div>
